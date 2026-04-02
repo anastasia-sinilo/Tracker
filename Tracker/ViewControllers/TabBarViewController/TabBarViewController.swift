@@ -2,10 +2,16 @@ import UIKit
 
 final class TabBarViewController: UITabBarController {
     
+    //MARK: - Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        tabBarConfig()
+        setupViewControllers()
     }
+    
+    //MARK: - Other functions
     
     private func tabBarConfig() {
         let appearance = UITabBarAppearance()
@@ -24,7 +30,7 @@ final class TabBarViewController: UITabBarController {
         let statisticsNavC = UINavigationController(rootViewController: statisticsVC)
         
         trackersVC.tabBarItem = UITabBarItem(title: "Трекеры", image: .trackersItem, selectedImage: nil)
-        statisticsVC.tabBarItem = UITabBarItem(title: "Трекеры", image: .statisticsItem, selectedImage: nil)
+        statisticsVC.tabBarItem = UITabBarItem(title: "Статистика", image: .statisticsItem, selectedImage: nil)
         
         self.viewControllers = [trackersNavC, statisticsNavC]
     }
