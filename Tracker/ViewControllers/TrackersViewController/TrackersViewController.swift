@@ -150,10 +150,15 @@ final class TrackersViewController: UIViewController {
     //MARK: - Actions
     
     @objc private func addTrackerButtonTapped() {
-        categories += makeMockTrackers()
+        //categories += makeMockTrackers()
         
-        collectionView.reloadData()
-        updateEmptyListImageVisibility()
+        let habitCreation = HabitCreationViewController()
+        habitCreation.delegate = self
+        let navigationController = UINavigationController(rootViewController: habitCreation)
+        present(navigationController, animated: true)
+        
+        //collectionView.reloadData()
+        //updateEmptyListImageVisibility()
     }
     
     @objc private func datePickerTapped() {
@@ -170,6 +175,7 @@ final class TrackersViewController: UIViewController {
     }
     
     //MARK: Моки
+    /*
     private func makeMockTrackers() -> [TrackerCategory] {
         let category1 = "Важное"
         let category2 = "Задачи"
@@ -203,6 +209,7 @@ final class TrackersViewController: UIViewController {
             TrackerCategory(categortTittle: category2, trackers: [tracker1])
         ]
     }
+    */
 }
 
 //MARK: - CollectionViewDelegate
@@ -298,5 +305,15 @@ extension TrackersViewController: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
         return CGSize(width: collectionView.bounds.width, height: 18)
+    }
+}
+
+//MARK: - HabitCreationDelegate
+
+extension TrackersViewController: HabitCreationViewControllerDelegate {
+    func didCreateHabit(_ tracker: Tracker, categoryName: String) {
+        //addTracker(tracker: tracker, categoryName: categoryName)
+        collectionView.reloadData()
+        updateEmptyListImageVisibility()
     }
 }
