@@ -10,6 +10,7 @@ final class TrackersViewController: UIViewController {
     
     var categories: [TrackerCategory] = []
     var completedTrackers: [TrackerRecord] = []
+    var completedTrackersSet: Set<String> = []
     
     var visibleCategories: [TrackerCategory] {
         let selectedWeekdayInt = Calendar.current.component(.weekday, from: datePicker.date)
@@ -185,6 +186,10 @@ final class TrackersViewController: UIViewController {
             categories.append(newCategory)
         }
     }
+    
+    private func trackerKey(for trackerId: UUID, date: String) -> String {
+        return "\(trackerId.uuidString)_\(date)"
+    }
 }
 
 //MARK: - CollectionViewDelegate
@@ -209,10 +214,11 @@ extension TrackersViewController: UICollectionViewDataSource {
         
         let tracker = visibleCategories[indexPath.section].trackers[indexPath.row]
         let date = currentDate
-        let isCompletedTracker = completedTrackers.contains { $0.trackerId == tracker.id && $0.trackerDate == date }
-        let completedTrackerDaysCount = completedTrackers.filter { $0.trackerId == tracker.id }.count
         
-        
+        let key = trackerKey(for: tracker.id, date: date)
+        let isCompletedTracker = completedTrackersSet.contains(key)
+        let completedTrackerDaysCount = completedTrackersSet.filter { $0.hasPrefix(tracker.id.uuidString) }.count
+       
         cell.dataForCellConfig(tracker: tracker, isCompletedTracker: isCompletedTracker, completedTrackerDaysCount: completedTrackerDaysCount, indexPath: indexPath)
         cell.delegate = self
         
@@ -238,18 +244,20 @@ extension TrackersViewController: TrackerCellDelegate {
         let chosenDate = datePicker.date
         guard chosenDate <= Date() else { return }
         
-        let record = TrackerRecord(
-            trackerId: trackerId,
-            trackerDate: currentDate
-        )
+        let dateString = currentDate
+        let key = trackerKey(for: trackerId, date: dateString)
+        let record = TrackerRecord(trackerId: trackerId, trackerDate: currentDate)
         
-        let isCompleted = completedTrackers.contains { $0.trackerId == trackerId && $0.trackerDate == currentDate }
+        let isCompleted = completedTrackersSet.contains(key)
         
-        if isCompleted { completedTrackers = completedTrackers.filter { !($0.trackerId == trackerId && $0.trackerDate == currentDate) }
+        if isCompleted {
+            completedTrackersSet.remove(key)
+            completedTrackers.removeAll { $0.trackerId == trackerId && $0.trackerDate == currentDate }
         } else {
+            completedTrackersSet.insert(key)
             completedTrackers = completedTrackers + [record]
         }
-        
+
         collectionView.reloadItems(at: [indexPath])
     }
 }
