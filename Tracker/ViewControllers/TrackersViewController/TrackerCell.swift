@@ -20,7 +20,7 @@ final class TrackerCell: UICollectionViewCell {
     private lazy var emojiLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
-        label.font = .systemFont(ofSize: 12)
+        label.font = .systemFont(ofSize: 16, weight: .medium)
         label.backgroundColor = .customWhite.withAlphaComponent(0.3)
         label.layer.cornerRadius = 12
         label.clipsToBounds = true
@@ -31,7 +31,7 @@ final class TrackerCell: UICollectionViewCell {
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.textColor = .customWhite
-        label.font = .systemFont(ofSize: 12, weight: .regular)
+        label.font = .systemFont(ofSize: 12, weight: .medium)
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -40,7 +40,7 @@ final class TrackerCell: UICollectionViewCell {
     private lazy var daysTrackerLabel: UILabel = {
         let label = UILabel()
         label.textColor = .customBlack
-        label.font = .systemFont(ofSize: 12, weight: .regular)
+        label.font = .systemFont(ofSize: 12, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -98,6 +98,7 @@ final class TrackerCell: UICollectionViewCell {
             titleLabel.leadingAnchor.constraint(equalTo: trackerCard.leadingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: trackerCard.trailingAnchor, constant: -12),
             
+            daysTrackerLabel.heightAnchor.constraint(equalToConstant: 18),
             daysTrackerLabel.topAnchor.constraint(equalTo: trackerCard.bottomAnchor, constant: 16),
             daysTrackerLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             daysTrackerLabel.centerXAnchor.constraint(equalTo: trackerCompletionButton.centerXAnchor),

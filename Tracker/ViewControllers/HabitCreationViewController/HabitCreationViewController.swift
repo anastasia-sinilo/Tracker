@@ -1,7 +1,7 @@
 import UIKit
 
 protocol HabitCreationViewControllerDelegate: AnyObject {
-    func didCreateHabit(_ tracker: Tracker, categoryName: String)
+    func dataForHabitCreation(_ tracker: Tracker, categoryName: String)
 }
 
 final class HabitCreationViewController: UIViewController {
@@ -10,7 +10,8 @@ final class HabitCreationViewController: UIViewController {
     
     private var trackerName = ""
     private var categoryName = "Важное" //временно
-    private var schedule = "Пример текста" //временно
+    private var schedule = ""
+    private var selectedDays: [WeekDay] = []
     
     private var menuTopToTextFieldConstraint: NSLayoutConstraint!
     private var menuTopToLabelConstraint: NSLayoutConstraint!
@@ -56,8 +57,6 @@ final class HabitCreationViewController: UIViewController {
     
     private lazy var tableView: UITableView = {
         let view = UITableView()
-        view.separatorStyle = .singleLine
-        view.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         view.layer.cornerRadius = 16
         view.isScrollEnabled = false
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -97,6 +96,7 @@ final class HabitCreationViewController: UIViewController {
         button.setTitleColor(.customWhite, for: .normal)
         button.backgroundColor = .customGray
         button.layer.cornerRadius = 16
+        button.isEnabled = false
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(createButtonTapped), for: .touchUpInside)
         return button
@@ -108,8 +108,15 @@ final class HabitCreationViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Новая привычка"
+        view.backgroundColor = .customWhite
         
         setupUI()
+        updateCreateButton()
+        
+        //скрытие клавиатуры
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
     }
     
     //MARK: - UI Setup
@@ -162,13 +169,14 @@ final class HabitCreationViewController: UIViewController {
             buttonsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             buttonsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             buttonsStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
-            ])
+        ])
     }
     
     //MARK: - Actions
     
     @objc private func textFieldChanged() {
-        
+        trackerName = textField.text ?? ""
+        updateCreateButton()
     }
     
     @objc private func cancelButtonTapped() {
@@ -176,11 +184,42 @@ final class HabitCreationViewController: UIViewController {
     }
     
     @objc private func createButtonTapped() {
-        print("createButtonTapped")
+        let trackerName = trackerName
+        let categoryName = categoryName
+        
+        let newHabit = Tracker(
+            id: UUID(),
+            title: trackerName,
+            color: .customGreen,
+            emoji: "⭐️",
+            schedule: selectedDays)
+        
+        delegate?.dataForHabitCreation(newHabit, categoryName: categoryName)
+        presentingViewController?.dismiss(animated: true)
+    }
+    
+    @objc private func hideKeyboard() {
+        view.endEditing(true)
+    }
+    
+    
+    //MARK: - Other functions
+    
+    private func updateCreateButton() {
+        let isNameValid = !trackerName.isEmpty
+        let isScheduleSelected = !selectedDays.isEmpty
+        
+        if isNameValid && isScheduleSelected {
+            createButton.isEnabled = true
+            createButton.backgroundColor = .customBlack
+        } else {
+            createButton.isEnabled = false
+            createButton.backgroundColor = .customGray
+        }
     }
 }
 
-//MARK: - TextFieldDelegate
+//MARK: - TextFieldDelegate (ограничение длины)
 
 extension HabitCreationViewController: UITextFieldDelegate {
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
@@ -196,29 +235,31 @@ extension HabitCreationViewController: UITextFieldDelegate {
         menuTopToTextFieldConstraint.isActive = !maxTextLength
         menuTopToLabelConstraint.isActive = maxTextLength
         
-        trackerName = updatedText
-                
         return updatedText.count <= 38
     }
 }
 
-//MARK: - TableViewDelegate
+//MARK: - TableViewDelegate (высота ячеек и тапы по ним)
 
 extension HabitCreationViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat { return 75 }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-            tableView.deselectRow(at: indexPath, animated: true)
-            
-            if indexPath.row == 0 {
-                print("Category screen")
-            } else {
-                print("Schedule screen")
-            }
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        if indexPath.row == 0 {
+            print("Category screen")
+        } else {
+            let scheduleViewController = ScheduleViewController()
+            scheduleViewController.delegate = self
+            scheduleViewController.chosenDays = self.selectedDays
+            let navigationController = UINavigationController(rootViewController: scheduleViewController)
+            present(navigationController, animated: true)
         }
+    }
 }
 
-//MARK: - TableViewDataSourse
+//MARK: - TableViewDataSourse (кол-во ячеек и их тип)
 
 extension HabitCreationViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return 2 }
@@ -226,11 +267,39 @@ extension HabitCreationViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: HabitCreationMenuCell.identifier, for: indexPath) as? HabitCreationMenuCell else { return UITableViewCell() }
         
-        indexPath.row == 0 ? cell.dataForMenuCellConfig(title: "Категория", subtitle: categoryName) : cell.dataForMenuCellConfig(title: "Расписание", subtitle: schedule)
-            
+        indexPath.row == 0
+        ? cell.dataForMenuCellConfig(title: "Категория", subtitle: categoryName)
+        : cell.dataForMenuCellConfig(title: "Расписание", subtitle: schedule)
+        
+        //скрытие нижнего сепаратора
+        if indexPath.row == 1 {
+            cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: .greatestFiniteMagnitude)
+        } else {
+            cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        }
+        
         cell.backgroundColor = .customGray.withAlphaComponent(0.1)
         
         return cell
     }
 }
 
+//MARK: - ScheduleViewControllerDelegate (перенос дней недели и отображение их в сабтайтле)
+
+extension HabitCreationViewController: ScheduleViewControllerDelegate {
+    func didSelectWeekDays(days: [WeekDay]) {
+        self.selectedDays = days
+        
+        if days.isEmpty {
+            schedule = ""
+        } else if days.count == 7 {
+            schedule = "Каждый день"
+        } else {
+            let orderedWeekDays: [WeekDay] = [.monday, .tuesday, .wednesday, .thursday, .friday, .saturday, .sunday]
+            let sortedDays = orderedWeekDays.filter { days.contains($0) }.map { $0.shortVersionTitle }.joined(separator: ", ")
+            schedule = "\(sortedDays)"
+        }
+        updateCreateButton()
+        tableView.reloadData()
+    }
+}

@@ -4,6 +4,9 @@ final class HabitCreationMenuCell: UITableViewCell {
     
     static let identifier = "MenuCell"
     
+    private var titleCenterYConstraint: NSLayoutConstraint!
+    private var titleTopConstraint: NSLayoutConstraint!
+    
     //MARK: - UI Elements
     
     private let titleLabel: UILabel = {
@@ -24,7 +27,6 @@ final class HabitCreationMenuCell: UITableViewCell {
     
     private lazy var chevronImageView: UIImageView = {
         let image = UIImageView(image: UIImage(resource: .chevron))
-        //image.tintColor = .systemGray2
         image.translatesAutoresizingMaskIntoConstraints = false
         return image
     }()
@@ -47,9 +49,15 @@ final class HabitCreationMenuCell: UITableViewCell {
         contentView.addSubview(subtitleLabel)
         contentView.addSubview(chevronImageView)
         
+        titleTopConstraint = titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 15)
+        titleCenterYConstraint = titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+
+        titleTopConstraint.isActive = true
+        titleCenterYConstraint.isActive = false
+        
         NSLayoutConstraint.activate([
             titleLabel.heightAnchor.constraint(equalToConstant: 22),
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 15),
+            //titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 15),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             
             subtitleLabel.heightAnchor.constraint(equalToConstant: 22),
@@ -66,7 +74,13 @@ final class HabitCreationMenuCell: UITableViewCell {
     //MARK: - Other functiosns
     
     func dataForMenuCellConfig(title: String, subtitle: String) {
+        let hasSubtitle = !subtitle.isEmpty
+        
         titleLabel.text = title
         subtitleLabel.text = subtitle
+        subtitleLabel.isHidden = !hasSubtitle
+        
+        titleTopConstraint.isActive = hasSubtitle
+        titleCenterYConstraint.isActive = !hasSubtitle
     }
 }
