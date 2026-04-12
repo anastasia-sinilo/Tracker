@@ -21,7 +21,7 @@ final class TrackersViewController: UIViewController {
                 tracker.schedule.contains(selectedWeekday)
             }
             if !trackers.isEmpty {
-                return TrackerCategory(categortTittle: category.categortTittle, trackers: trackers)
+                return TrackerCategory(categoryTittle: category.categoryTittle, trackers: trackers)
             } else {
                 return nil
             }
@@ -173,15 +173,15 @@ final class TrackersViewController: UIViewController {
     }
     
     func addTracker(tracker: Tracker, categoryName: String) {
-        if let enteredCategory = categories.firstIndex(where: {$0.categortTittle == categoryName}) {
+        if let enteredCategory = categories.firstIndex(where: {$0.categoryTittle == categoryName}) {
             let category = categories[enteredCategory] //получаем категорию
             let updatedCategory = TrackerCategory( //обновляем категорию
-                categortTittle: category.categortTittle,
+                categoryTittle: category.categoryTittle,
                 trackers: category.trackers + [tracker]) //добавляем в нее трекер
             categories[enteredCategory] = updatedCategory
         } else {
             let newCategory = TrackerCategory( //создаем новую категорию
-                categortTittle: categoryName,
+                categoryTittle: categoryName,
                 trackers: [tracker])
             categories.append(newCategory)
         }
@@ -198,7 +198,7 @@ extension TrackersViewController: UICollectionViewDelegate {
     
 }
 
-//MARK: - CollectionViewDataSourse
+//MARK: - CollectionViewDataSource
 
 extension TrackersViewController: UICollectionViewDataSource {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -229,7 +229,7 @@ extension TrackersViewController: UICollectionViewDataSource {
         if kind == UICollectionView.elementKindSectionHeader {
             guard let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: TrackersHeader.identifier, for: indexPath) as? TrackersHeader else { return UICollectionReusableView() }
             
-            header.dataForHeaderConfig(title: visibleCategories[indexPath.section].categortTittle)
+            header.dataForHeaderConfig(title: visibleCategories[indexPath.section].categoryTittle)
             return header
         }
         return UICollectionReusableView()

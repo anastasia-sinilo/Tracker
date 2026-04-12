@@ -83,7 +83,7 @@ extension ScheduleViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat { return 75 }
 }
 
-//MARK: - TableViewDataSourse (кол-во ячеек и их тип)
+//MARK: - TableViewDataSource (кол-во ячеек и их тип)
 
 extension ScheduleViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

@@ -1,10 +1,13 @@
 import UIKit
+import os
 
 protocol HabitCreationViewControllerDelegate: AnyObject {
     func dataForHabitCreation(_ tracker: Tracker, categoryName: String)
 }
 
 final class HabitCreationViewController: UIViewController {
+    
+    private let logger = Logger(subsystem: "com.anastasia-sinilo.Tracker.habits", category: "HabitCreation")
     
     weak var delegate: HabitCreationViewControllerDelegate?
     
@@ -209,13 +212,9 @@ final class HabitCreationViewController: UIViewController {
         let isNameValid = !trackerName.isEmpty
         let isScheduleSelected = !selectedDays.isEmpty
         
-        if isNameValid && isScheduleSelected {
-            createButton.isEnabled = true
-            createButton.backgroundColor = .customBlack
-        } else {
-            createButton.isEnabled = false
-            createButton.backgroundColor = .customGray
-        }
+        let isEnabled: Bool = isNameValid && isScheduleSelected
+        createButton.isEnabled = isEnabled
+        createButton.backgroundColor = isEnabled ? .customBlack : .customGray
     }
 }
 
@@ -227,15 +226,16 @@ extension HabitCreationViewController: UITextFieldDelegate {
         
         guard let textRange = Range(range, in: currentText) else { return false }
         
+        let textLengthLimit = 38
         let updatedText = currentText.replacingCharacters(in: textRange, with: string)
         
-        let maxTextLength = updatedText.count > 38
+        let maxTextLength = updatedText.count > textLengthLimit
         textLimitLabel.isHidden = !maxTextLength
         
         menuTopToTextFieldConstraint.isActive = !maxTextLength
         menuTopToLabelConstraint.isActive = maxTextLength
         
-        return updatedText.count <= 38
+        return updatedText.count <= textLengthLimit
     }
 }
 
@@ -248,7 +248,7 @@ extension HabitCreationViewController: UITableViewDelegate {
         tableView.deselectRow(at: indexPath, animated: true)
         
         if indexPath.row == 0 {
-            print("Category screen")
+            logger.info("Category screen")
         } else {
             let scheduleViewController = ScheduleViewController()
             scheduleViewController.delegate = self
@@ -259,7 +259,7 @@ extension HabitCreationViewController: UITableViewDelegate {
     }
 }
 
-//MARK: - TableViewDataSourse (кол-во ячеек и их тип)
+//MARK: - TableViewDataSource (кол-во ячеек и их тип)
 
 extension HabitCreationViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return 2 }

@@ -38,8 +38,9 @@ final class HabitCreationMenuCell: UITableViewCell {
         setupUI()
     }
     
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        nil
     }
     
     //MARK: - UI Setup
@@ -57,7 +58,6 @@ final class HabitCreationMenuCell: UITableViewCell {
         
         NSLayoutConstraint.activate([
             titleLabel.heightAnchor.constraint(equalToConstant: 22),
-            //titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 15),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             
             subtitleLabel.heightAnchor.constraint(equalToConstant: 22),
@@ -71,7 +71,7 @@ final class HabitCreationMenuCell: UITableViewCell {
             ])
     }
     
-    //MARK: - Other functiosns
+    //MARK: - Other functions
     
     func dataForMenuCellConfig(title: String, subtitle: String) {
         let hasSubtitle = !subtitle.isEmpty
