@@ -8,32 +8,21 @@ final class TrackersViewController: UIViewController {
     
     //MARK: - Properties
     
-    var categories: [TrackerCategory] = []
+    private let trackerStore: TrackerStore
+    private let trackerCategoryStore: TrackerCategoryStore
+    private let trackerRecordStore: TrackerRecordStore
+    
     var completedTrackers: [TrackerRecord] = []
     var completedTrackersSet: Set<String> = []
+    private var visibleCategories: [TrackerCategory] = []
     
-    var visibleCategories: [TrackerCategory] {
-        let selectedWeekdayInt = Calendar.current.component(.weekday, from: datePicker.date)
-        guard let selectedWeekday = WeekDay(rawValue: selectedWeekdayInt) else {
-            return categories}
-        let visibleCategory = categories.compactMap { category in
-            let trackers = category.trackers.filter { tracker in
-                tracker.schedule.contains(selectedWeekday)
-            }
-            if !trackers.isEmpty {
-                return TrackerCategory(categoryTittle: category.categoryTittle, trackers: trackers)
-            } else {
-                return nil
-            }
-        }
-        return visibleCategory
+    private var currentDate: Date {
+        Calendar.current.startOfDay(for: datePicker.date)
     }
     
-    private var currentDate: String {
-        let selectedDate = datePicker.date
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "dd.MM.yyyy"
-        return dateFormatter.string(from: selectedDate)
+    
+    private var formattedCurrentDate: String {
+        formatDate(currentDate)
     }
     
     //MARK: - UI Elements
@@ -77,14 +66,40 @@ final class TrackersViewController: UIViewController {
         return view
     }()
     
+    //MARK: - init
+    
+    init(trackerStore: TrackerStore,
+         trackerCategoryStore: TrackerCategoryStore,
+         trackerRecordStore: TrackerRecordStore) {
+        self.trackerStore = trackerStore
+        self.trackerCategoryStore = trackerCategoryStore
+        self.trackerRecordStore = trackerRecordStore
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     //MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .customWhite
         
+        completedTrackers = trackerRecordStore.fetchRecords()
+        completedTrackersSet = Set(completedTrackers.map { trackerKey(for: $0.trackerId, date: formatDate($0.trackerDate))})
+        
         setupNavigationBar()
         setupUI()
+        updateEmptyListImageVisibility()
+        updateVisibleCategories()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        collectionView.reloadData()
         updateEmptyListImageVisibility()
     }
     
@@ -160,11 +175,18 @@ final class TrackersViewController: UIViewController {
     }
     
     @objc private func datePickerTapped() {
+        updateVisibleCategories()
         collectionView.reloadData()
         updateEmptyListImageVisibility()
     }
     
     //MARK: - Other functions
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd.MM.yyyy"
+        return formatter.string(from: date)
+    }
     
     private func updateEmptyListImageVisibility() {
         let isEmpty = visibleCategories.isEmpty
@@ -173,22 +195,34 @@ final class TrackersViewController: UIViewController {
     }
     
     func addTracker(tracker: Tracker, categoryName: String) {
-        if let enteredCategory = categories.firstIndex(where: {$0.categoryTittle == categoryName}) {
-            let category = categories[enteredCategory] //получаем категорию
-            let updatedCategory = TrackerCategory( //обновляем категорию
-                categoryTittle: category.categoryTittle,
-                trackers: category.trackers + [tracker]) //добавляем в нее трекер
-            categories[enteredCategory] = updatedCategory
-        } else {
-            let newCategory = TrackerCategory( //создаем новую категорию
-                categoryTittle: categoryName,
-                trackers: [tracker])
-            categories.append(newCategory)
+        do {
+            try trackerStore.addTracker(tracker, categoryName: categoryName)
+        } catch {
+            assertionFailure("Failure adding tracker: \(error)")
         }
     }
     
     private func trackerKey(for trackerId: UUID, date: String) -> String {
         return "\(trackerId.uuidString)_\(date)"
+    }
+    
+    private func updateVisibleCategories() {
+        let categories = trackerCategoryStore.categories
+        
+        let selectedWeekdayInt = Calendar.current.component(.weekday, from: datePicker.date)
+        
+        guard let selectedWeekday = WeekDay(rawValue: selectedWeekdayInt) else {
+            visibleCategories = categories
+            return
+        }
+        
+        visibleCategories = categories.compactMap { category in
+            let trackers = category.trackers.filter { $0.schedule.contains(selectedWeekday) }
+            
+            if trackers.isEmpty { return nil }
+            
+            return TrackerCategory(categoryTittle: category.categoryTittle, trackers: trackers)
+        }
     }
 }
 
@@ -213,12 +247,12 @@ extension TrackersViewController: UICollectionViewDataSource {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCell.identifier, for: indexPath) as? TrackerCell else { return UICollectionViewCell() }
         
         let tracker = visibleCategories[indexPath.section].trackers[indexPath.row]
-        let date = currentDate
+        let date = formattedCurrentDate
         
         let key = trackerKey(for: tracker.id, date: date)
         let isCompletedTracker = completedTrackersSet.contains(key)
         let completedTrackerDaysCount = completedTrackersSet.filter { $0.hasPrefix(tracker.id.uuidString) }.count
-       
+        
         cell.dataForCellConfig(tracker: tracker, isCompletedTracker: isCompletedTracker, completedTrackerDaysCount: completedTrackerDaysCount, indexPath: indexPath)
         cell.delegate = self
         
@@ -244,21 +278,26 @@ extension TrackersViewController: TrackerCellDelegate {
         let chosenDate = datePicker.date
         guard chosenDate <= Date() else { return }
         
-        let dateString = currentDate
+        let dateString = formattedCurrentDate
         let key = trackerKey(for: trackerId, date: dateString)
-        let record = TrackerRecord(trackerId: trackerId, trackerDate: currentDate)
-        
         let isCompleted = completedTrackersSet.contains(key)
         
-        if isCompleted {
-            completedTrackersSet.remove(key)
-            completedTrackers.removeAll { $0.trackerId == trackerId && $0.trackerDate == currentDate }
-        } else {
-            completedTrackersSet.insert(key)
-            completedTrackers = completedTrackers + [record]
+        do {
+            if isCompleted {
+                try trackerRecordStore.deleteRecord(trackerID: trackerId, trackerDate: currentDate)
+                completedTrackersSet.remove(key)
+                completedTrackers.removeAll { $0.trackerId == trackerId && $0.trackerDate == currentDate}
+            } else {
+                try trackerRecordStore.addRecord(trackerID: trackerId, trackerDate: currentDate)
+                let record = TrackerRecord(trackerId: trackerId, trackerDate: currentDate)
+                
+                completedTrackersSet.insert(key)
+                completedTrackers.append(record)
+            }
+            collectionView.reloadItems(at: [indexPath])
+        } catch {
+            print("Ошибка RecordStore")
         }
-
-        collectionView.reloadItems(at: [indexPath])
     }
 }
 
@@ -296,7 +335,7 @@ extension TrackersViewController: UICollectionViewDelegateFlowLayout {
 extension TrackersViewController: HabitCreationViewControllerDelegate {
     func dataForHabitCreation(_ tracker: Tracker, categoryName: String) {
         addTracker(tracker: tracker, categoryName: categoryName)
-        
+        updateVisibleCategories()
         collectionView.reloadData()
         updateEmptyListImageVisibility()
     }
