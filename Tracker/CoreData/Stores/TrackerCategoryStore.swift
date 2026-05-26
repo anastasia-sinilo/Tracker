@@ -1,9 +1,16 @@
 import Foundation
+import UIKit
 import CoreData
+
+protocol TrackerCategoryStoreDelegate: AnyObject {
+    func trackerCategoryStoreDidUpdate()
+}
 
 final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
     
     //MARK: - Properties
+    
+    weak var delegate: TrackerCategoryStoreDelegate?
     
     private var context: NSManagedObjectContext
     
@@ -57,7 +64,8 @@ final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
             let id = trackerCD.id,
             let title = trackerCD.title,
             let emoji = trackerCD.emoji,
-            let color = trackerCD.color,
+            let colorHex = trackerCD.color,
+            let color = UIColor(hex: colorHex),
             let rawSchedule = trackerCD.schedule
         else {
             return nil
@@ -66,5 +74,9 @@ final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
         let schedule = rawSchedule.split(separator: ",").compactMap { Int($0) }.compactMap { WeekDay(rawValue: $0) }
 
         return Tracker(id: id, title: title, color: color, emoji: emoji, schedule: schedule)
+    }
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        delegate?.trackerCategoryStoreDidUpdate()
     }
 }

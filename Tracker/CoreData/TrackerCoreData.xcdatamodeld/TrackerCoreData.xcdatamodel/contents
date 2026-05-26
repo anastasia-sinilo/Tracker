@@ -4,8 +4,8 @@
         <attribute name="categoryTitle" optional="YES" attributeType="String"/>
         <relationship name="trackersCoreData" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TrackerCD" inverseName="categoryCoreData" inverseEntity="TrackerCD"/>
     </entity>
-    <entity name="TrackerCD" representedClassName="TrackerCD" syncable="YES">
-        <attribute name="color" optional="YES" attributeType="Transformable" customClassName="UIColor"/>
+    <entity name="TrackerCD" representedClassName="TrackerCD" syncable="YES" codeGenerationType="class">
+        <attribute name="color" optional="YES" attributeType="String" customClassName="UIColor"/>
         <attribute name="emoji" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="schedule" optional="YES" attributeType="String"/>

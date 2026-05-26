@@ -19,7 +19,7 @@ final class TrackerStore {
         let object = TrackerCD(context: context)
         object.id = tracker.id
         object.title = tracker.title
-        object.color = tracker.color
+        object.color = tracker.color.toHex()
         object.emoji = tracker.emoji
         object.schedule = tracker.schedule.map { String($0.rawValue) }.joined(separator: ",")
         object.categoryCoreData = category

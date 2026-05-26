@@ -87,6 +87,8 @@ final class TrackersViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .customWhite
         
+        trackerCategoryStore.delegate = self
+        
         completedTrackers = trackerRecordStore.fetchRecords()
         completedTrackersSet = Set(completedTrackers.map { trackerKey(for: $0.trackerId, date: formatDate($0.trackerDate))})
         
@@ -294,7 +296,16 @@ extension TrackersViewController: TrackerCellDelegate {
                 completedTrackersSet.insert(key)
                 completedTrackers.append(record)
             }
-            collectionView.reloadItems(at: [indexPath])
+            if let cell = collectionView.cellForItem(at: indexPath) as? TrackerCell {
+                
+                let completedDaysCount = completedTrackersSet
+                    .filter { $0.hasPrefix(trackerId.uuidString) }
+                    .count
+                cell.updateCompletionState(
+                    isCompleted: !isCompleted,
+                    completedDaysCount: completedDaysCount
+                )
+            }
         } catch {
             print("Ошибка RecordStore")
         }
@@ -336,6 +347,16 @@ extension TrackersViewController: HabitCreationViewControllerDelegate {
     func dataForHabitCreation(_ tracker: Tracker, categoryName: String) {
         addTracker(tracker: tracker, categoryName: categoryName)
         updateVisibleCategories()
+        collectionView.reloadData()
+        updateEmptyListImageVisibility()
+    }
+}
+
+//MARK: - TrackerCategoryStoreDelegate
+
+extension TrackersViewController: TrackerCategoryStoreDelegate {
+    
+    func trackerCategoryStoreDidUpdate() {
         collectionView.reloadData()
         updateEmptyListImageVisibility()
     }
