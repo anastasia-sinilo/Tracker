@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24299" systemVersion="24G90" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
+    <entity name="TrackerCategoryCD" representedClassName="TrackerCategoryCD" syncable="YES" codeGenerationType="class">
+        <attribute name="categoryTitle" optional="YES" attributeType="String"/>
+        <relationship name="trackersCoreData" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TrackerCD" inverseName="categoryCoreData" inverseEntity="TrackerCD"/>
+    </entity>
+    <entity name="TrackerCD" representedClassName="TrackerCD" syncable="YES" codeGenerationType="class">
+        <attribute name="color" optional="YES" attributeType="String" customClassName="UIColor"/>
+        <attribute name="emoji" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="schedule" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <relationship name="categoryCoreData" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TrackerCategoryCD" inverseName="trackersCoreData" inverseEntity="TrackerCategoryCD"/>
+    </entity>
+    <entity name="TrackerRecordCD" representedClassName="TrackerRecordCD" syncable="YES" codeGenerationType="class">
+        <attribute name="trackerDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="trackerID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+    </entity>
+</model>

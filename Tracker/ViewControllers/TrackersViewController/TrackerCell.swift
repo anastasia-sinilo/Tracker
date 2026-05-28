@@ -7,7 +7,7 @@ final class TrackerCell: UICollectionViewCell {
     
     private var trackerId: UUID?
     private var indexPath: IndexPath?
-
+    
     //MARK: - UI Elements
     
     private lazy var trackerCard: UIView = {
@@ -59,7 +59,7 @@ final class TrackerCell: UICollectionViewCell {
     @objc private func trackerCompletionButtonTapped() {
         guard let trackerId = trackerId,
               let indexPath = indexPath else { return }
-            
+        
         delegate?.didTapComplete(trackerId: trackerId, indexPath: indexPath)
     }
     
@@ -138,5 +138,21 @@ final class TrackerCell: UICollectionViewCell {
             daysText = "дней"
         }
         return "\(daysCount) \(daysText)"
+    }
+    
+    func updateCompletionState(
+        isCompleted: Bool,
+        completedDaysCount: Int
+    ) {
+        trackerCompletionButton.setImage(
+            isCompleted
+            ? UIImage(resource: .doneButton)
+            : UIImage(resource: .plusButton),
+            for: .normal
+        )
+        
+        daysTrackerLabel.text = updateDaysTrackerLabel(
+            completedTrackerDaysCount: completedDaysCount
+        )
     }
 }

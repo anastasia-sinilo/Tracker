@@ -24,7 +24,16 @@ final class TabBarViewController: UITabBarController {
     }
     
     private func setupViewControllers() {
-        let trackersVC = TrackersViewController()
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+        
+        let context = appDelegate.context
+        let trackerStore = TrackerStore(context: context)
+        let trackerCategoryStore = TrackerCategoryStore(context: context)
+        let trackerRecordStore = TrackerRecordStore(context: context)
+        
+        let trackersVC = TrackersViewController(trackerStore: trackerStore,
+                                                trackerCategoryStore: trackerCategoryStore,
+                                                trackerRecordStore: trackerRecordStore)
         let trackersNavC = UINavigationController(rootViewController: trackersVC)
         let statisticsVC = StatisticsViewController()
         let statisticsNavC = UINavigationController(rootViewController: statisticsVC)
