@@ -12,7 +12,8 @@ final class HabitCreationViewController: UIViewController {
     weak var delegate: HabitCreationViewControllerDelegate?
     
     private var trackerName = ""
-    private var categoryName = "Важное" //временно
+    //private var categoryName = "Важное" //временно
+    private var selectedCategory: TrackerCategory?
     private var schedule = ""
     private var selectedEmoji: String?
     private var selectedColor: UIColor?
@@ -222,7 +223,8 @@ final class HabitCreationViewController: UIViewController {
         guard let color = selectedColor, let emoji = selectedEmoji else { return }
         
         let trackerName = trackerName
-        let categoryName = categoryName
+        //let categoryName = categoryName
+        guard let categoryName = selectedCategory?.categoryTittle else { return }
         
         let newHabit = Tracker(
             id: UUID(),
@@ -247,8 +249,9 @@ final class HabitCreationViewController: UIViewController {
         let isScheduleSelected = !selectedDays.isEmpty
         let isEmojiSelected = selectedEmoji != nil
         let isColorSelected = selectedColor != nil
+        let isCategorySelected = selectedCategory != nil
         
-        let isEnabled: Bool = isNameValid && isScheduleSelected && isEmojiSelected && isColorSelected
+        let isEnabled: Bool = isNameValid && isScheduleSelected && isEmojiSelected && isColorSelected && isCategorySelected
         createButton.isEnabled = isEnabled
         createButton.backgroundColor = isEnabled ? .customBlack : .customGray
     }
@@ -284,7 +287,15 @@ extension HabitCreationViewController: UITableViewDelegate {
         tableView.deselectRow(at: indexPath, animated: true)
         
         if indexPath.row == 0 {
-            logger.info("Category screen")
+            //logger.info("Category screen")
+            guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+            
+            let categoryStore = TrackerCategoryStore(context: appDelegate.context)
+            let viewModel = CategoriesViewModel(categoryStore: categoryStore, selectedCategory: selectedCategory)
+            let vc = CategoriesViewController(viewModel: viewModel)
+            
+            vc.delegate = self
+            navigationController?.pushViewController(vc, animated: true)
         } else {
             let scheduleViewController = ScheduleViewController()
             scheduleViewController.delegate = self
@@ -304,7 +315,7 @@ extension HabitCreationViewController: UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: HabitCreationMenuCell.identifier, for: indexPath) as? HabitCreationMenuCell else { return UITableViewCell() }
         
         indexPath.row == 0
-        ? cell.dataForMenuCellConfig(title: "Категория", subtitle: categoryName)
+        ? cell.dataForMenuCellConfig(title: "Категория", subtitle: selectedCategory?.categoryTittle ?? "")//categoryName)
         : cell.dataForMenuCellConfig(title: "Расписание", subtitle: schedule)
         
         //скрытие нижнего сепаратора
@@ -412,7 +423,7 @@ extension HabitCreationViewController: UICollectionViewDataSource {
     }
 }
 
-    //MARK: - FlowLayout (размеры ячеек и тп)
+//MARK: - FlowLayout (размеры ячеек и тп)
 
 extension HabitCreationViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
@@ -434,5 +445,15 @@ extension HabitCreationViewController: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 5
+    }
+}
+
+//MARK: - CategorySelectionDelegate
+
+extension HabitCreationViewController: CategorySelectionDelegate {
+    func didSelectCategory(_ category: TrackerCategory) {
+        selectedCategory = category
+        tableView.reloadData()
+        updateCreateButton()
     }
 }

@@ -79,4 +79,15 @@ final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         delegate?.trackerCategoryStoreDidUpdate()
     }
+    
+    func addCategory(title: String) throws {
+        let categoryCD = TrackerCategoryCD(context: context)
+        categoryCD.categoryTitle = title
+        
+        try context.save()
+    }
+    
+    func fetchCategories() -> [TrackerCategory] {
+        categories
+    }
 }
