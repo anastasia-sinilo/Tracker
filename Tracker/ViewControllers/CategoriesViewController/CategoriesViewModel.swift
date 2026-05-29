@@ -34,7 +34,29 @@ final class CategoriesViewModel {
             try categoryStore.addCategory(title: title)
             fetchCategories()
         } catch {
-            print("Ошибка при добавлении категории: \(error)")
+            print("Ошибка при добавлении категории")
+        }
+    }
+    
+    func deleteCategory(at index: Int) {
+        let category = categories[index]
+        
+        do {
+            try categoryStore.deleteCategory(category)
+            fetchCategories()
+        } catch {
+            print("Ошибка при удалении категории")
+        }
+    }
+    
+    func updateCategory(at index: Int, newTitle: String) {
+        let oldTitle = categories[index].categoryTittle
+        
+        do {
+            try categoryStore.updateCategory(oldTitle: oldTitle, newTitle: newTitle)
+            fetchCategories()
+        } catch {
+            print("Ошибка при обновлении категории")
         }
     }
     
@@ -54,6 +76,8 @@ final class CategoriesViewModel {
     func category(at index: Int) -> TrackerCategory {
         categories[index]
     }
+    
+    
     
     
     

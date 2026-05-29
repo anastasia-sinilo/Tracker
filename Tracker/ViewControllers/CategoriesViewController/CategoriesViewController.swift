@@ -167,13 +167,6 @@ extension CategoriesViewController: UITableViewDataSource {
         
         cell.dataForCellConfig(title: category.categoryTittle, isSelected: viewModel.isSelected(at: indexPath.row), isLastCell: isLastCell)
         
-        /*/Скрытие нижнего сепаратора
-        if indexPath.row == viewModel.numberOfCategories() - 1 {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: .greatestFiniteMagnitude)
-        } else {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
-        } */
-        
         return cell
     }
 }
@@ -190,5 +183,48 @@ extension CategoriesViewController: UITableViewDelegate {
         
         delegate?.didSelectCategory(category)
         navigationController?.popViewController(animated: true)
+    }
+}
+
+//MARK: - Меню и алерт удаления
+
+extension CategoriesViewController {
+    func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
+            
+            let editAction = UIAction(title: "Редактировать") { [weak self] _ in
+                guard let self else { return }
+                
+                let category = self.viewModel.category(at: indexPath.row)
+                let vc = EditCategoryViewController(categoryTitle: category.categoryTittle)
+                
+                vc.onCategoryEdited = { [weak self] newTitle in
+                    self?.viewModel.updateCategory(at: indexPath.row, newTitle: newTitle)
+                }
+                self.navigationController?.pushViewController(vc, animated: true)
+            }
+            
+            let deleteAction = UIAction(title: "Удалить", attributes: .destructive) { [weak self] _ in
+                self?.showDeleteAlert(indexPath: indexPath)
+            }
+            
+            return UIMenu(children: [editAction, deleteAction])
+        }
+    }
+    
+    private func showDeleteAlert(indexPath: IndexPath) {
+        
+        let alert = UIAlertController(title: "Эта категория точно не нужна?", message: nil, preferredStyle: .actionSheet)
+        
+        let deleteAction = UIAlertAction(title: "Удалить", style: .destructive) { [weak self] _ in
+            self?.viewModel.deleteCategory(at: indexPath.row)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+        
+        alert.addAction(deleteAction)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true)
     }
 }

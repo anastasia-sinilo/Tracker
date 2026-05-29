@@ -357,6 +357,7 @@ extension TrackersViewController: HabitCreationViewControllerDelegate {
 extension TrackersViewController: TrackerCategoryStoreDelegate {
     
     func trackerCategoryStoreDidUpdate() {
+        updateVisibleCategories()
         collectionView.reloadData()
         updateEmptyListImageVisibility()
     }
