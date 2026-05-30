@@ -76,9 +76,4 @@ final class CategoriesViewModel {
     func category(at index: Int) -> TrackerCategory {
         categories[index]
     }
-    
-    
-    
-    
-    
 }
