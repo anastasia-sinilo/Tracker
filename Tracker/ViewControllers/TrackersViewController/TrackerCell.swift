@@ -8,6 +8,9 @@ final class TrackerCell: UICollectionViewCell {
     private var trackerId: UUID?
     private var indexPath: IndexPath?
     
+    var previewView: UIView { trackerCard }
+    var cardColor: UIColor? { trackerCard.backgroundColor }
+    
     //MARK: - UI Elements
     
     private lazy var trackerCard: UIView = {

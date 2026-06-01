@@ -112,4 +112,12 @@ final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
         categoryCD.categoryTitle = newTitle
         try context.save()
     }
+    
+    func category(for trackerId: UUID) -> TrackerCategory? {
+        categories.first { category in
+            category.trackers.contains { tracker in
+                tracker.id == trackerId
+            }
+        }
+    }
 }

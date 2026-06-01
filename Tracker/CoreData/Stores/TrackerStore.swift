@@ -42,4 +42,31 @@ final class TrackerStore {
         newCategory.categoryTitle = categoryName
         return newCategory
     }
+    
+    func deleteTracker(_ tracker: Tracker) throws {
+        let request = TrackerCD.fetchRequest()
+        
+        guard let trackers = try? context.fetch(request),
+              let trackerCD = trackers.first(where: { $0.id == tracker.id })
+        else { return }
+        
+        context.delete(trackerCD)
+        try context.save()
+    }
+    
+    func updateTracker(_ tracker: Tracker, categoryName: String) throws {
+        let request = TrackerCD.fetchRequest()
+
+        guard let trackers = try? context.fetch(request),
+              let trackerCD = trackers.first(where: { $0.id == tracker.id })
+        else { return }
+
+        trackerCD.title = tracker.title
+        trackerCD.color = tracker.color.toHex()
+        trackerCD.emoji = tracker.emoji
+        trackerCD.schedule = tracker.schedule.map { String($0.rawValue) }.joined(separator: ",")
+        trackerCD.categoryCoreData = findCategory(categoryName: categoryName)
+
+        try context.save()
+    }
 }

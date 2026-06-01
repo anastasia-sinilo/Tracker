@@ -20,7 +20,6 @@ final class TrackersViewController: UIViewController {
         Calendar.current.startOfDay(for: datePicker.date)
     }
     
-    
     private var formattedCurrentDate: String {
         formatDate(currentDate)
     }
@@ -226,12 +225,107 @@ final class TrackersViewController: UIViewController {
             return TrackerCategory(categoryTittle: category.categoryTittle, trackers: trackers)
         }
     }
+    
+    private func editTracker(at indexPath: IndexPath) {
+        let tracker = visibleCategories[indexPath.section].trackers[indexPath.row]
+        let completedDaysCount = completedTrackersSet.filter { $0.hasPrefix(tracker.id.uuidString) }.count
+        let category = trackerCategoryStore.category(for: tracker.id)
+        
+        let vc = HabitCreationViewController(mode: .edit(tracker: tracker, category: category, completedDays: completedDaysCount))
+        vc.onTrackerEdited = { [weak self] tracker, categoryName in
+            self?.updateTracker(tracker, categoryName: categoryName)
+        }
+        vc.hidesBottomBarWhenPushed = true
+        let navigationController = UINavigationController(rootViewController: vc)
+        present(navigationController, animated: true)
+    }
+    
+    private func updateTracker(_ tracker: Tracker, categoryName: String) {
+        do {
+            try trackerStore.updateTracker(tracker, categoryName: categoryName)
+
+            updateVisibleCategories()
+            collectionView.reloadData()
+        } catch {
+            print(error)
+        }
+    }
+    
+    private func deleteTracker(_ tracker: Tracker) {
+        do {
+            try trackerStore.deleteTracker(tracker)
+            
+            updateVisibleCategories()
+            collectionView.reloadData()
+            updateEmptyListImageVisibility()
+        } catch {
+            print(error)
+        }
+    }
 }
 
-//MARK: - CollectionViewDelegate
+//MARK: - CollectionViewDelegate - Меню и алерт удаления трекера
 
 extension TrackersViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        UIContextMenuConfiguration(identifier: indexPath as NSIndexPath, previewProvider: nil) { [weak self] _ in
+            
+            guard let self else { return nil }
+            
+            let editAction = UIAction(title: "edit_action".localized) { _ in
+                self.editTracker(at: indexPath)
+            }
+            
+            let deleteAction = UIAction(title: "delete_action".localized,attributes: .destructive) { _ in
+                self.showDeleteTrackerAlert(indexPath: indexPath)
+            }
+            
+            return UIMenu(children: [editAction, deleteAction])
+        }
+    }
+    //Выделение только карточки
+    func collectionView(_ collectionView: UICollectionView, previewForHighlightingContextMenuWithConfiguration configuration: UIContextMenuConfiguration) -> UITargetedPreview? {
+        guard let indexPath = configuration.identifier as? IndexPath,
+              let cell = collectionView.cellForItem(at: indexPath) as? TrackerCell
+        else { return nil }
+
+        let parameters = UIPreviewParameters()
+        parameters.backgroundColor = cell.cardColor
+       
+        return UITargetedPreview(view: cell.previewView, parameters: parameters)
+    }
+    //Помогает убрать мигание карточки при отмене выбора
+    func collectionView(_ collectionView: UICollectionView, previewForDismissingContextMenuWithConfiguration configuration: UIContextMenuConfiguration) -> UITargetedPreview? {
+        guard let indexPath = configuration.identifier as? IndexPath,
+                let cell = collectionView.cellForItem(at: indexPath) as? TrackerCell
+        else { return nil }
+
+        let parameters = UIPreviewParameters()
+        parameters.backgroundColor = cell.cardColor
+
+        return UITargetedPreview(view: cell.previewView, parameters: parameters)
+    }
     
+    private func showDeleteTrackerAlert(indexPath: IndexPath) {
+        
+        let alert = UIAlertController(title: "delete_alert_title".localized,
+                                      message: nil, preferredStyle: .actionSheet)
+        
+        let deleteAction = UIAlertAction(title: "delete_action".localized, style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            
+            let tracker = self.visibleCategories[indexPath.section].trackers[indexPath.row]
+            self.deleteTracker(tracker)
+        }
+        
+        let cancelAction = UIAlertAction(title: "cancel_button".localized, style: .cancel)
+        
+        alert.addAction(deleteAction)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true)
+    }
 }
 
 //MARK: - CollectionViewDataSource
