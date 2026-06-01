@@ -38,8 +38,8 @@ final class TabBarViewController: UITabBarController {
         let statisticsVC = StatisticsViewController()
         let statisticsNavC = UINavigationController(rootViewController: statisticsVC)
         
-        trackersVC.tabBarItem = UITabBarItem(title: "Трекеры", image: .trackersItem, selectedImage: nil)
-        statisticsVC.tabBarItem = UITabBarItem(title: "Статистика", image: .statisticsItem, selectedImage: nil)
+        trackersVC.tabBarItem = UITabBarItem(title: "trackers_screen_title".localized, image: .trackersItem, selectedImage: nil)
+        statisticsVC.tabBarItem = UITabBarItem(title: "statistics_screen_title".localized, image: .statisticsItem, selectedImage: nil)
         
         self.viewControllers = [trackersNavC, statisticsNavC]
     }

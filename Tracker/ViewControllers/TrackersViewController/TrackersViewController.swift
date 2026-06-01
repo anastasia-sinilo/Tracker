@@ -31,7 +31,7 @@ final class TrackersViewController: UIViewController {
     
     private lazy var searchBar: UISearchBar = {
         let searchBar = UISearchBar()
-        searchBar.placeholder = "Поиск"
+        searchBar.placeholder = "search_placeholder".localized
         searchBar.searchBarStyle = .minimal
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         return searchBar
@@ -46,7 +46,7 @@ final class TrackersViewController: UIViewController {
     
     private lazy var emptyTrackerListLabel: UILabel = {
         let label = UILabel()
-        label.text = "Что будем отслеживать?"
+        label.text = "empty_list_placeholder".localized
         label.font = UIFont.systemFont(ofSize: 12, weight: .regular)
         label.textColor = .customBlack
         label.textAlignment = .center
@@ -137,7 +137,7 @@ final class TrackersViewController: UIViewController {
     }
     
     private func setupNavigationBar() {
-        title = "Трекеры"
+        title = "trackers_screen_title".localized
         navigationController?.navigationBar.prefersLargeTitles = true
         
         let addTrackerButton = UIBarButtonItem(image: .addTracker, style: .plain,

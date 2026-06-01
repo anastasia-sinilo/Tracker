@@ -131,11 +131,11 @@ final class TrackerCell: UICollectionViewCell {
         let daysText: String
         
         if daysCount == 1 {
-            daysText = "день"
+            daysText = "one_day_count".localized
         } else if daysCount == 2 || daysCount == 3 || daysCount == 4 {
-            daysText = "дня"
+            daysText = "few_days_count".localized
         } else {
-            daysText = "дней"
+            daysText = "zero_or_many_days_count".localized
         }
         return "\(daysCount) \(daysText)"
     }
