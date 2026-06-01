@@ -6,7 +6,7 @@
 "nothing_found" = "Ничего не найдено";
 "edit_action" = "Редактировать";
 "delete_action" = "Удалить";
-"delete_alert_title" = "Уверены что хотите удалить трекер?";
+"delete_alert_title" = "Уверены, что хотите удалить трекер?";
 "cancel_button" = "Отменить";
 "one_day_count" = "день";
 "few_days_count" = "дня";

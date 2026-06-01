@@ -24,6 +24,14 @@ final class TrackersViewController: UIViewController {
         formatDate(currentDate)
     }
     
+    private var selectedFilter: TrackerFilter = {
+        guard let rawValue = UserDefaults.standard.string(forKey: "SelectedFilter"),
+              let filter = TrackerFilter(rawValue: rawValue)
+        else { return .all }
+
+        return filter
+    }()
+    
     //MARK: - UI Elements
     
     private var datePicker = UIDatePicker()
@@ -57,12 +65,25 @@ final class TrackersViewController: UIViewController {
     private lazy var collectionView: UICollectionView = {
         let view = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
         view.backgroundColor = .clear
+        view.contentInset.bottom = 100
         view.register(TrackerCell.self, forCellWithReuseIdentifier: TrackerCell.identifier)
         view.register(TrackersHeader.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: TrackersHeader.identifier)
         view.delegate = self
         view.dataSource = self
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
+    }()
+    
+    private lazy var filtersButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("filters_title".localized, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .regular)
+        button.setTitleColor(.customWhite, for: .normal)
+        button.backgroundColor = .customBlue
+        button.layer.cornerRadius = 16
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: #selector(filtersButtonTapped), for: .touchUpInside)
+        return button
     }()
     
     //MARK: - init
@@ -93,7 +114,7 @@ final class TrackersViewController: UIViewController {
         
         setupNavigationBar()
         setupUI()
-        updateEmptyListImageVisibility()
+        updatePlaceholderState()
         updateVisibleCategories()
     }
     
@@ -101,7 +122,7 @@ final class TrackersViewController: UIViewController {
         super.viewDidAppear(animated)
         
         collectionView.reloadData()
-        updateEmptyListImageVisibility()
+        updatePlaceholderState()
     }
     
     //MARK: - UI Setup
@@ -111,6 +132,7 @@ final class TrackersViewController: UIViewController {
         view.addSubview(emptyTrackerListImage)
         view.addSubview(emptyTrackerListLabel)
         view.addSubview(collectionView)
+        view.addSubview(filtersButton)
         
         NSLayoutConstraint.activate([
             searchBar.heightAnchor.constraint(equalToConstant: 36),
@@ -131,7 +153,12 @@ final class TrackersViewController: UIViewController {
             collectionView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 24),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            
+            filtersButton.heightAnchor.constraint(equalToConstant: 50),
+            filtersButton.widthAnchor.constraint(equalToConstant: 114),
+            filtersButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            filtersButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
     
@@ -178,7 +205,20 @@ final class TrackersViewController: UIViewController {
     @objc private func datePickerTapped() {
         updateVisibleCategories()
         collectionView.reloadData()
-        updateEmptyListImageVisibility()
+        updatePlaceholderState()
+    }
+    
+    @objc private func filtersButtonTapped() {
+        print("Filters")
+        
+        let vc = FiltersViewController(selectedFilter: selectedFilter)
+        vc.onFilterSelected = { [weak self] filter in
+            self?.applyFilter(filter)
+        }
+        
+        let navigationController = UINavigationController(rootViewController: vc)
+        
+        present(navigationController, animated: true)
     }
     
     //MARK: - Other functions
@@ -187,12 +227,6 @@ final class TrackersViewController: UIViewController {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd.MM.yyyy"
         return formatter.string(from: date)
-    }
-    
-    private func updateEmptyListImageVisibility() {
-        let isEmpty = visibleCategories.isEmpty
-        emptyTrackerListImage.isHidden = !isEmpty
-        emptyTrackerListLabel.isHidden = !isEmpty
     }
     
     func addTracker(tracker: Tracker, categoryName: String) {
@@ -218,13 +252,65 @@ final class TrackersViewController: UIViewController {
         }
         
         visibleCategories = categories.compactMap { category in
-            let trackers = category.trackers.filter { $0.schedule.contains(selectedWeekday) }
-            
+            let trackers = category.trackers.filter { tracker in
+                guard tracker.schedule.contains(selectedWeekday) else { return false }
+
+                let key = trackerKey(for: tracker.id, date: formattedCurrentDate)
+                let completed = completedTrackersSet.contains(key)
+
+                switch selectedFilter {
+                case .all, .today:
+                    return true
+                case .completed:
+                    return completed
+                case .uncompleted:
+                    return !completed
+                }
+            }
             if trackers.isEmpty { return nil }
-            
             return TrackerCategory(categoryTittle: category.categoryTittle, trackers: trackers)
         }
+        filtersButton.isHidden = visibleCategories.isEmpty
     }
+    
+    //MARK: - Placeholders
+    
+    private func updatePlaceholder(state: PlaceholderState) {
+        switch state {
+        case .emptyTrackers:
+            emptyTrackerListImage.image = UIImage(resource: .emptyTrackerList)
+            emptyTrackerListLabel.text = "empty_list_placeholder".localized
+            emptyTrackerListImage.isHidden = false
+            emptyTrackerListLabel.isHidden = false
+            
+        case .notFound:
+            emptyTrackerListImage.image = UIImage(resource: .nothingFound)
+            emptyTrackerListLabel.text = "nothing_found".localized
+            emptyTrackerListImage.isHidden = false
+            emptyTrackerListLabel.isHidden = false
+            
+        case .hidden:
+            emptyTrackerListImage.isHidden = true
+            emptyTrackerListLabel.isHidden = true
+        }
+    }
+    
+    private func updatePlaceholderState() {
+        let hasAnyTrackers = !trackerCategoryStore.categories.isEmpty
+        let hasVisibleTrackers = !visibleCategories.isEmpty
+
+        if !hasAnyTrackers {
+            updatePlaceholder(state: .emptyTrackers)
+            return
+        }
+        if !hasVisibleTrackers {
+            updatePlaceholder(state: .notFound)
+            return
+        }
+        updatePlaceholder(state: .hidden)
+    }
+    
+    //MARK: - Действия с трекерами
     
     private func editTracker(at indexPath: IndexPath) {
         let tracker = visibleCategories[indexPath.section].trackers[indexPath.row]
@@ -257,10 +343,26 @@ final class TrackersViewController: UIViewController {
             
             updateVisibleCategories()
             collectionView.reloadData()
-            updateEmptyListImageVisibility()
+            updatePlaceholderState()
         } catch {
             print(error)
         }
+    }
+    
+    //MARK: - Фильтры
+    
+    private func applyFilter(_ filter: TrackerFilter) {
+        selectedFilter = filter
+
+        UserDefaults.standard.set(filter.rawValue, forKey: "SelectedFilter")
+
+        if filter == .today {
+            datePicker.date = Date()
+        }
+        
+        updateVisibleCategories()
+        collectionView.reloadData()
+        updatePlaceholderState()
     }
 }
 
@@ -442,7 +544,7 @@ extension TrackersViewController: HabitCreationViewControllerDelegate {
         addTracker(tracker: tracker, categoryName: categoryName)
         updateVisibleCategories()
         collectionView.reloadData()
-        updateEmptyListImageVisibility()
+        updatePlaceholderState()
     }
 }
 
@@ -453,6 +555,6 @@ extension TrackersViewController: TrackerCategoryStoreDelegate {
     func trackerCategoryStoreDidUpdate() {
         updateVisibleCategories()
         collectionView.reloadData()
-        updateEmptyListImageVisibility()
+        updatePlaceholderState()
     }
 }
