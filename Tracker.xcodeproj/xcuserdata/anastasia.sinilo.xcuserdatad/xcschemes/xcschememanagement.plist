@@ -7,11 +7,21 @@
 		<key>Tracker.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>TrackerTests.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>800F863F2FCE47E500AAD4E6</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>8016B11A2F7BE5E0000DE81C</key>
 		<dict>
 			<key>primary</key>

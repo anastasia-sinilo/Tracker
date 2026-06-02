@@ -173,6 +173,8 @@ final class TrackersViewController: UIViewController {
         
         let container = UIView()
         container.addSubview(datePicker)
+        container.layer.cornerRadius = 16
+        container.clipsToBounds = true
         
         NSLayoutConstraint.activate([
             datePicker.leadingAnchor.constraint(equalTo: container.leadingAnchor),
@@ -185,12 +187,17 @@ final class TrackersViewController: UIViewController {
         
         let datePickerItem = UIBarButtonItem(customView: container)
         datePicker.datePickerMode = .date
+        datePicker.overrideUserInterfaceStyle = .light
+        datePicker.backgroundColor = .white
         datePicker.preferredDatePickerStyle = .compact
         datePicker.layer.cornerRadius = 8
         datePicker.clipsToBounds = true
         datePicker.translatesAutoresizingMaskIntoConstraints = false
         datePicker.addTarget(self, action: #selector(datePickerTapped), for: .valueChanged)
         navigationItem.rightBarButtonItem = datePickerItem
+        if #available(iOS 26.0, *) {
+            navigationItem.rightBarButtonItem?.hidesSharedBackground = true
+        }
     }
     
     //MARK: - Actions
@@ -209,8 +216,6 @@ final class TrackersViewController: UIViewController {
     }
     
     @objc private func filtersButtonTapped() {
-        print("Filters")
-        
         let vc = FiltersViewController(selectedFilter: selectedFilter)
         vc.onFilterSelected = { [weak self] filter in
             self?.applyFilter(filter)
