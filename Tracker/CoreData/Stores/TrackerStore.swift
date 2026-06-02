@@ -44,12 +44,19 @@ final class TrackerStore {
     }
     
     func deleteTracker(_ tracker: Tracker) throws {
-        let request = TrackerCD.fetchRequest()
-        
-        guard let trackers = try? context.fetch(request),
+        let trackerRequest = TrackerCD.fetchRequest()
+
+        guard let trackers = try? context.fetch(trackerRequest),
               let trackerCD = trackers.first(where: { $0.id == tracker.id })
         else { return }
-        
+
+        let recordRequest: NSFetchRequest<TrackerRecordCD> = TrackerRecordCD.fetchRequest()
+        recordRequest.predicate = NSPredicate(format: "trackerID == %@", tracker.id as CVarArg)
+
+        let records = try context.fetch(recordRequest)
+
+        records.forEach { context.delete($0) }
+
         context.delete(trackerCD)
         try context.save()
     }

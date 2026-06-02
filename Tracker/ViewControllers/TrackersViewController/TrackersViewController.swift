@@ -14,7 +14,9 @@ final class TrackersViewController: UIViewController {
     
     var completedTrackers: [TrackerRecord] = []
     var completedTrackersSet: Set<String> = []
+    
     private var visibleCategories: [TrackerCategory] = []
+    private var categoriesForSelectedDate: [TrackerCategory] = []
     
     private var currentDate: Date {
         Calendar.current.startOfDay(for: datePicker.date)
@@ -256,9 +258,15 @@ final class TrackersViewController: UIViewController {
             return
         }
         
-        visibleCategories = categories.compactMap { category in
+        categoriesForSelectedDate = categories.compactMap { category in
+            let trackers = category.trackers.filter { $0.schedule.contains(selectedWeekday) }
+            if trackers.isEmpty { return nil }
+
+            return TrackerCategory(categoryTittle: category.categoryTittle, trackers: trackers)
+        }
+        
+        visibleCategories = categoriesForSelectedDate.compactMap { category in
             let trackers = category.trackers.filter { tracker in
-                guard tracker.schedule.contains(selectedWeekday) else { return false }
 
                 let key = trackerKey(for: tracker.id, date: formattedCurrentDate)
                 let completed = completedTrackersSet.contains(key)
@@ -275,7 +283,7 @@ final class TrackersViewController: UIViewController {
             if trackers.isEmpty { return nil }
             return TrackerCategory(categoryTittle: category.categoryTittle, trackers: trackers)
         }
-        filtersButton.isHidden = visibleCategories.isEmpty
+        filtersButton.isHidden = categoriesForSelectedDate.isEmpty
     }
     
     //MARK: - Placeholders
@@ -301,10 +309,10 @@ final class TrackersViewController: UIViewController {
     }
     
     private func updatePlaceholderState() {
-        let hasAnyTrackers = !trackerCategoryStore.categories.isEmpty
+        let hasTrackersForSelectedDate = !categoriesForSelectedDate.isEmpty
         let hasVisibleTrackers = !visibleCategories.isEmpty
 
-        if !hasAnyTrackers {
+        if !hasTrackersForSelectedDate {
             updatePlaceholder(state: .emptyTrackers)
             return
         }
