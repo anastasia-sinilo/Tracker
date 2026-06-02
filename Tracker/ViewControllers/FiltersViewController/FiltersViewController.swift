@@ -104,9 +104,9 @@ extension FiltersViewController: UITableViewDataSource {
         let shouldShowMark: Bool
 
         switch selectedFilter {
-        case .completed, .uncompleted, .today:
+        case .completed, .uncompleted:
             shouldShowMark = item.filter == selectedFilter
-        case .all:
+        case .all, .today:
             shouldShowMark = false
         }
         
