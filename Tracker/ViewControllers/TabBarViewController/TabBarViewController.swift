@@ -16,7 +16,7 @@ final class TabBarViewController: UITabBarController {
     private func tabBarConfig() {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
+        appearance.backgroundColor = .customWhite
         appearance.shadowColor = .separator
         
         tabBar.standardAppearance = appearance
@@ -35,11 +35,11 @@ final class TabBarViewController: UITabBarController {
                                                 trackerCategoryStore: trackerCategoryStore,
                                                 trackerRecordStore: trackerRecordStore)
         let trackersNavC = UINavigationController(rootViewController: trackersVC)
-        let statisticsVC = StatisticsViewController()
+        let statisticsVC = StatisticsViewController(trackerRecordStore: trackerRecordStore)
         let statisticsNavC = UINavigationController(rootViewController: statisticsVC)
         
-        trackersVC.tabBarItem = UITabBarItem(title: "Трекеры", image: .trackersItem, selectedImage: nil)
-        statisticsVC.tabBarItem = UITabBarItem(title: "Статистика", image: .statisticsItem, selectedImage: nil)
+        trackersVC.tabBarItem = UITabBarItem(title: "trackers_screen_title".localized, image: .trackersItem, selectedImage: nil)
+        statisticsVC.tabBarItem = UITabBarItem(title: "statistics_screen_title".localized, image: .statisticsItem, selectedImage: nil)
         
         self.viewControllers = [trackersNavC, statisticsNavC]
     }

@@ -1,0 +1,13 @@
+"trackers_screen_title" = "Трекеры";
+"statistics_screen_title" = "Статистика";
+"search_placeholder" = "Поиск";
+"empty_list_placeholder" = "Что будем отслеживать?";
+"filters_title" = "Фильтры";
+"nothing_found" = "Ничего не найдено";
+"edit_action" = "Редактировать";
+"delete_action" = "Удалить";
+"delete_alert_title" = "Уверены, что хотите удалить трекер?";
+"cancel_button" = "Отменить";
+"one_day_count" = "день";
+"few_days_count" = "дня";
+"zero_or_many_days_count" = "дней";

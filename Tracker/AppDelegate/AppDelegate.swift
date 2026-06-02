@@ -1,5 +1,6 @@
 import UIKit
 import CoreData
+import AppMetricaCore
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -10,7 +11,12 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var window: UIWindow?
     
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool { return true }
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        if let configuration = AppMetricaConfiguration(apiKey: "APPMETRICA_API_KEY") {
+                AppMetrica.activate(with: configuration)
+            }
+        return true
+    }
     
     //MARK: - UISceneSession Lifecycle
     

@@ -1,0 +1,13 @@
+"trackers_screen_title" = "Trackers";
+"statistics_screen_title" = "Statistics";
+"search_placeholder" = "Search";
+"empty_list_placeholder" = "What will we track?";
+"filters_title" = "Filters";
+"nothing_found" = "Nothing found";
+"edit_action" = "Edit";
+"delete_action" = "Delete";
+"delete_alert_title" = "Are you sure you want to delete the tracker?";
+"cancel_button" = "Cancel";
+"one_day_count" = "day";
+"few_days_count" = "days";
+"zero_or_many_days_count" = "days";
