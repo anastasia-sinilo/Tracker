@@ -42,6 +42,7 @@ final class TrackersViewController: UIViewController {
         let searchBar = UISearchBar()
         searchBar.placeholder = "search_placeholder".localized
         searchBar.searchBarStyle = .minimal
+        searchBar.delegate = self
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         return searchBar
     }()
@@ -125,8 +126,15 @@ final class TrackersViewController: UIViewController {
         
         collectionView.reloadData()
         updatePlaceholderState()
+        
+        AnalyticsService.report(event: "open", screen: "Main")
     }
     
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        AnalyticsService.report(event: "close", screen: "Main")
+    }
     //MARK: - UI Setup
     
     private func setupUI() {
@@ -205,6 +213,8 @@ final class TrackersViewController: UIViewController {
     //MARK: - Actions
     
     @objc private func addTrackerButtonTapped() {
+        AnalyticsService.report(event: "click", screen: "Main", item: "add_track")
+        
         let habitCreation = HabitCreationViewController()
         habitCreation.delegate = self
         let navigationController = UINavigationController(rootViewController: habitCreation)
@@ -218,6 +228,8 @@ final class TrackersViewController: UIViewController {
     }
     
     @objc private func filtersButtonTapped() {
+        AnalyticsService.report(event: "click", screen: "Main", item: "filter")
+        
         let vc = FiltersViewController(selectedFilter: selectedFilter)
         vc.onFilterSelected = { [weak self] filter in
             self?.applyFilter(filter)
@@ -266,8 +278,17 @@ final class TrackersViewController: UIViewController {
         }
         
         visibleCategories = categoriesForSelectedDate.compactMap { category in
+            let searchText = searchBar.text?.lowercased() ?? ""
             let trackers = category.trackers.filter { tracker in
-
+                
+                let matchesSearch: Bool
+                    if searchText.isEmpty {
+                        matchesSearch = true
+                    } else {
+                        matchesSearch = tracker.title.lowercased().contains(searchText)
+                    }
+                    guard matchesSearch else { return false }
+                
                 let key = trackerKey(for: tracker.id, date: formattedCurrentDate)
                 let completed = completedTrackersSet.contains(key)
 
@@ -326,6 +347,8 @@ final class TrackersViewController: UIViewController {
     //MARK: - Действия с трекерами
     
     private func editTracker(at indexPath: IndexPath) {
+        AnalyticsService.report(event: "click", screen: "Main", item: "edit")
+        
         let tracker = visibleCategories[indexPath.section].trackers[indexPath.row]
         let completedDaysCount = completedTrackersSet.filter { $0.hasPrefix(tracker.id.uuidString) }.count
         let category = trackerCategoryStore.category(for: tracker.id)
@@ -351,6 +374,8 @@ final class TrackersViewController: UIViewController {
     }
     
     private func deleteTracker(_ tracker: Tracker) {
+        AnalyticsService.report(event: "click", screen: "Main", item: "delete")
+        
         do {
             try trackerStore.deleteTracker(tracker)
             
@@ -486,6 +511,8 @@ extension TrackersViewController: UICollectionViewDataSource {
 extension TrackersViewController: TrackerCellDelegate {
     
     func didTapComplete(trackerId: UUID, indexPath: IndexPath) {
+        AnalyticsService.report(event: "click", screen: "Main", item: "track")
+        
         let chosenDate = datePicker.date
         guard chosenDate <= Date() else { return }
         
@@ -569,5 +596,33 @@ extension TrackersViewController: TrackerCategoryStoreDelegate {
         updateVisibleCategories()
         collectionView.reloadData()
         updatePlaceholderState()
+    }
+}
+
+//MARK: - UISearchBarDelegate
+
+extension TrackersViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        updateVisibleCategories()
+        collectionView.reloadData()
+        updatePlaceholderState()
+        
+        let isSearching = !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+        
+        if isSearching {
+            filtersButton.isHidden = visibleCategories.isEmpty
+        } else {
+            filtersButton.isHidden = categoriesForSelectedDate.isEmpty
+        }
+    }
+
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.text = nil
+
+        updateVisibleCategories()
+        collectionView.reloadData()
+        updatePlaceholderState()
+        
+        filtersButton.isHidden = categoriesForSelectedDate.isEmpty
     }
 }
